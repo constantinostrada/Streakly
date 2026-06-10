@@ -11,6 +11,7 @@
 import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
 
+import { MealsWidget } from "./components/MealsWidget";
 import { QuoteWidget } from "./components/QuoteWidget";
 import { HabitsClient } from "./HabitsClient";
 
@@ -43,6 +44,11 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       </div>
 
       <HabitsClient initialHabits={habits} />
+
+      {/* Meals */}
+      <div style={{ marginTop: "2rem" }}>
+        <MealsWidget />
+      </div>
     </main>
   );
 }
