@@ -1,0 +1,74 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "plugins": ["@typescript-eslint", "import"],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports" }
+    ],
+
+    "import/no-restricted-paths": [
+      "error",
+      {
+        "zones": [
+          {
+            "target": "./src/domain",
+            "from": "./src/application",
+            "message": "[Clean Architecture] domain must NOT import from application."
+          },
+          {
+            "target": "./src/domain",
+            "from": "./src/infrastructure",
+            "message": "[Clean Architecture] domain must NOT import from infrastructure."
+          },
+          {
+            "target": "./src/domain",
+            "from": "./src/interfaces",
+            "message": "[Clean Architecture] domain must NOT import from interfaces."
+          },
+          {
+            "target": "./src/application",
+            "from": "./src/infrastructure",
+            "message": "[Clean Architecture] application must NOT import from infrastructure."
+          },
+          {
+            "target": "./src/application",
+            "from": "./src/interfaces",
+            "message": "[Clean Architecture] application must NOT import from interfaces."
+          },
+          {
+            "target": "./src/interfaces",
+            "from": "./src/infrastructure",
+            "message": "[Clean Architecture] interfaces must NOT import from infrastructure (go through use cases)."
+          },
+          {
+            "target": "./src/interfaces",
+            "from": "./src/domain",
+            "message": "[Clean Architecture] interfaces must NOT import directly from domain (go through application DTOs)."
+          }
+        ]
+      }
+    ],
+
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "import/order": [
+      "warn",
+      {
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+        "newlines-between": "always"
+      }
+    ]
+  }
+}
