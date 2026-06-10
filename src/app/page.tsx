@@ -12,6 +12,8 @@ import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
 import { HabitsClient } from "./HabitsClient";
 
+import { AppFooter } from "./components/AppFooter";
+
 async function getHabits() {
   const useCase = new ListHabitsUseCase(habitRepository);
   return useCase.execute({ includeArchived: false });
@@ -38,5 +40,6 @@ export default async function HomePage(): Promise<React.JSX.Element> {
 
       <HabitsClient initialHabits={habits} />
     </main>
+    <AppFooter />
   );
 }
