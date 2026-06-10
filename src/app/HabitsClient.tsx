@@ -16,6 +16,7 @@ import { useState, useCallback } from "react";
 
 import type { HabitResponseDto } from "@/application/dtos/HabitDto";
 
+import { HABIT_COMPLETED_EVENT } from "./components/StreakWidget";
 import { GoalsWidget } from "./GoalsWidget";
 import { HabitGrid } from "./HabitGrid";
 
@@ -92,6 +93,8 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
     if (!json.success) {
       setError(json.error ?? "Failed to complete habit.");
     } else {
+      // Signal interested widgets (e.g. StreakWidget) that a habit was completed.
+      window.dispatchEvent(new Event(HABIT_COMPLETED_EVENT));
       await refreshHabits();
     }
   };

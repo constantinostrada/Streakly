@@ -13,6 +13,7 @@ import { habitRepository } from "@/infrastructure/persistence/singletonRepositor
 
 import { MealsWidget } from "./components/MealsWidget";
 import { QuoteWidget } from "./components/QuoteWidget";
+import { StreakWidget } from "./components/StreakWidget";
 import { HabitsClient } from "./HabitsClient";
 
 async function getHabits() {
@@ -41,6 +42,10 @@ export default async function HomePage(): Promise<React.JSX.Element> {
 
       <div style={{ marginBottom: "2rem" }}>
         <QuoteWidget />
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <StreakWidget />
       </div>
 
       <HabitsClient initialHabits={habits} />
