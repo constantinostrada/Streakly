@@ -16,6 +16,8 @@ import { useState, useCallback } from "react";
 
 import type { HabitResponseDto } from "@/application/dtos/HabitDto";
 
+import { HabitGrid } from "./HabitGrid";
+
 interface HabitsClientProps {
   initialHabits: HabitResponseDto[];
 }
@@ -327,6 +329,9 @@ function HabitCard({ habit, onComplete, onArchive }: HabitCardProps): React.JSX.
           }}
         />
       </div>
+
+      {/* Streak grid (last ~30 days, persisted in localStorage) */}
+      <HabitGrid habitId={habit.id} />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: "0.8rem", color: "var(--color-muted)" }}>
