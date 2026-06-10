@@ -11,11 +11,8 @@
 import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
 
-import { MealsWidget } from "./components/MealsWidget";
-import { QuoteWidget } from "./components/QuoteWidget";
-import { StatsCard } from "./components/StatsCard";
-import { StreakWidget } from "./components/StreakWidget";
-import { HabitsClient } from "./HabitsClient";
+import { TipWidget } from "./components/TipWidget";
+import GreetingWidget from "./components/GreetingWidget";
 
 import { AppFooter } from "./components/AppFooter";
 
@@ -44,28 +41,12 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       </header>
 
       <div style={{ marginBottom: "2rem" }}>
-        <QuoteWidget />
+        <GreetingWidget />
       </div>
-
       <div style={{ marginBottom: "2rem" }}>
         {/* TipWidget inserted here */}
         {/* @ts-expect-error Async Server Component */}
         <TipWidget />
-      </div>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <StreakWidget />
-      </div>
-
-      <div style={{ marginBottom: "2rem" }}>
-        <StatsCard />
-      </div>
-
-      <HabitsClient initialHabits={habits} />
-
-      {/* Meals */}
-      <div style={{ marginTop: "2rem" }}>
-        <MealsWidget />
       </div>
     </main>
     <AppFooter />
