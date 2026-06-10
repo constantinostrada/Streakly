@@ -16,6 +16,7 @@ import { useState, useCallback } from "react";
 
 import type { HabitResponseDto } from "@/application/dtos/HabitDto";
 
+import { GoalsWidget } from "./GoalsWidget";
 import { HabitGrid } from "./HabitGrid";
 
 interface HabitsClientProps {
@@ -209,6 +210,11 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
           </div>
         </form>
       </section>
+
+      {/* Goals */}
+      <div style={{ marginBottom: "2rem" }}>
+        <GoalsWidget />
+      </div>
 
       {/* Habit List */}
       <section>
