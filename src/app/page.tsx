@@ -10,6 +10,8 @@
 
 import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
+
+import { QuoteWidget } from "./components/QuoteWidget";
 import { HabitsClient } from "./HabitsClient";
 
 async function getHabits() {
@@ -35,6 +37,10 @@ export default async function HomePage(): Promise<React.JSX.Element> {
         </h1>
         <p style={{ color: "var(--color-muted)" }}>Build better habits, one day at a time.</p>
       </header>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <QuoteWidget />
+      </div>
 
       <HabitsClient initialHabits={habits} />
     </main>
