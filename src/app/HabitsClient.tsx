@@ -12,12 +12,18 @@
  * All business rules are enforced server-side in the domain layer.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 import type { HabitResponseDto } from "@/application/dtos/HabitDto";
 
+import { DEFAULT_HABIT_COLOR, loadHabitColor, saveHabitColor } from "./components/habitColor";
+import { HabitModal, type HabitFormValues } from "./components/HabitModal";
+import { HABIT_COMPLETED_EVENT } from "./components/StreakWidget";
 import { GoalsWidget } from "./GoalsWidget";
 import { HabitGrid } from "./HabitGrid";
+
+/** Which habit (if any) the create/edit modal is currently open for. */
+type ModalState = { mode: "create" } | { mode: "edit"; habit: HabitResponseDto } | null;
 
 interface HabitsClientProps {
   initialHabits: HabitResponseDto[];
@@ -32,13 +38,11 @@ interface ApiResponse<T> {
 export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.Element {
   const [habits, setHabits] = useState<HabitResponseDto[]>(initialHabits);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  // ─── Form state ────────────────────────────────────────────────────────────
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [frequencyValue, setFrequencyValue] = useState(1);
-  const [period, setPeriod] = useState<"daily" | "weekly">("daily");
+  // ─── Modal state ─────────────────────────────────────────────────────────────
+  const [modal, setModal] = useState<ModalState>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -52,36 +56,62 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
     }
   }, []);
 
+  const openCreate = useCallback((): void => {
+    setModalError(null);
+    setModal({ mode: "create" });
+  }, []);
+
+  const openEdit = useCallback((habit: HabitResponseDto): void => {
+    setModalError(null);
+    setModal({ mode: "edit", habit });
+  }, []);
+
+  const closeModal = useCallback((): void => {
+    if (!submitting) setModal(null);
+  }, [submitting]);
+
   // ─── Actions ───────────────────────────────────────────────────────────────
 
-  const handleCreate = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    clearError();
-
-    if (!name.trim()) {
-      setError("Habit name is required.");
-      return;
-    }
-
-    setLoading(true);
+  // Create (POST) or edit (PATCH name) a habit. The accent color is browser-local
+  // so it's persisted to localStorage rather than sent to the API.
+  const handleSubmit = async (values: HabitFormValues): Promise<void> => {
+    if (!modal) return;
+    setSubmitting(true);
+    setModalError(null);
     try {
-      const res = await fetch("/api/habits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, frequencyValue, period }),
-      });
-      const json = (await res.json()) as ApiResponse<HabitResponseDto>;
-      if (!json.success) {
-        setError(json.error ?? "Failed to create habit.");
+      if (modal.mode === "create") {
+        const res = await fetch("/api/habits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: values.name,
+            frequencyValue: values.frequencyValue,
+            period: values.period,
+          }),
+        });
+        const json = (await res.json()) as ApiResponse<HabitResponseDto>;
+        if (!json.success || !json.data) {
+          setModalError(json.error ?? "No se pudo crear el hábito.");
+          return;
+        }
+        saveHabitColor(json.data.id, values.color);
       } else {
-        setName("");
-        setDescription("");
-        setFrequencyValue(1);
-        setPeriod("daily");
-        await refreshHabits();
+        const res = await fetch(`/api/habits/${modal.habit.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: values.name }),
+        });
+        const json = (await res.json()) as ApiResponse<HabitResponseDto>;
+        if (!json.success) {
+          setModalError(json.error ?? "No se pudo guardar el hábito.");
+          return;
+        }
+        saveHabitColor(modal.habit.id, values.color);
       }
+      await refreshHabits();
+      setModal(null);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -92,6 +122,8 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
     if (!json.success) {
       setError(json.error ?? "Failed to complete habit.");
     } else {
+      // Signal interested widgets (e.g. StreakWidget) that a habit was completed.
+      window.dispatchEvent(new Event(HABIT_COMPLETED_EVENT));
       await refreshHabits();
     }
   };
@@ -137,80 +169,6 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
         </div>
       )}
 
-      {/* Create Habit Form */}
-      <section
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius)",
-          padding: "1.5rem",
-          marginBottom: "2rem",
-          boxShadow: "var(--shadow)",
-        }}
-      >
-        <h2 style={{ marginBottom: "1rem", fontSize: "1.1rem", fontWeight: 600 }}>
-          ➕ Add a new habit
-        </h2>
-        <form onSubmit={(e) => void handleCreate(e)}>
-          <div style={{ display: "grid", gap: "0.75rem" }}>
-            <input
-              type="text"
-              placeholder="Habit name *"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={inputStyle}
-            />
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <span style={{ fontSize: "0.875rem", color: "var(--color-muted)" }}>
-                  Times per period:
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={frequencyValue}
-                  onChange={(e) => setFrequencyValue(Number(e.target.value))}
-                  style={{ ...inputStyle, width: "5rem" }}
-                />
-              </label>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value as "daily" | "weekly")}
-                style={inputStyle}
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                background: loading ? "var(--color-muted)" : "var(--color-primary)",
-                color: "#fff",
-                border: "none",
-                borderRadius: "var(--radius)",
-                padding: "0.6rem 1.25rem",
-                fontWeight: 600,
-                fontSize: "0.95rem",
-                alignSelf: "flex-start",
-              }}
-            >
-              {loading ? "Creating…" : "Create Habit"}
-            </button>
-          </div>
-        </form>
-      </section>
-
       {/* Goals */}
       <div style={{ marginBottom: "2rem" }}>
         <GoalsWidget />
@@ -218,16 +176,26 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
 
       {/* Habit List */}
       <section>
-        <h2
+        <div
           style={{
             marginBottom: "1rem",
-            fontSize: "1.1rem",
-            fontWeight: 600,
-            color: "var(--color-muted)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
           }}
         >
-          Active Habits ({habits.length})
-        </h2>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--color-muted)" }}>
+            Active Habits ({habits.length})
+          </h2>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+          >
+            + Hábito
+          </button>
+        </div>
 
         {habits.length === 0 ? (
           <p
@@ -239,7 +207,7 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
               borderRadius: "var(--radius)",
             }}
           >
-            No habits yet. Add one above to get started! 🚀
+            No habits yet. Tap “+ Hábito” to get started! 🚀
           </p>
         ) : (
           <ul style={{ listStyle: "none", display: "grid", gap: "0.75rem" }}>
@@ -249,11 +217,32 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
                 habit={habit}
                 onComplete={() => void handleComplete(habit.id)}
                 onArchive={() => void handleArchive(habit.id)}
+                onEdit={() => openEdit(habit)}
               />
             ))}
           </ul>
         )}
       </section>
+
+      {modal && (
+        <HabitModal
+          mode={modal.mode}
+          submitting={submitting}
+          error={modalError}
+          initial={
+            modal.mode === "edit"
+              ? {
+                  name: modal.habit.name,
+                  frequencyValue: modal.habit.frequencyValue,
+                  period: modal.habit.period,
+                  color: loadHabitColor(modal.habit.id),
+                }
+              : undefined
+          }
+          onSubmit={(values) => void handleSubmit(values)}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 }
@@ -264,16 +253,22 @@ interface HabitCardProps {
   habit: HabitResponseDto;
   onComplete: () => void;
   onArchive: () => void;
+  onEdit: () => void;
 }
 
-function HabitCard({ habit, onComplete, onArchive }: HabitCardProps): React.JSX.Element {
+function HabitCard({ habit, onComplete, onArchive, onEdit }: HabitCardProps): React.JSX.Element {
   const progressPercent = Math.round(habit.completionRate * 100);
+
+  // Accent color is browser-local; load it after mount to avoid hydration drift.
+  const [color, setColor] = useState(DEFAULT_HABIT_COLOR);
+  useEffect(() => setColor(loadHabitColor(habit.id)), [habit.id]);
 
   return (
     <li
       style={{
         background: "var(--color-surface)",
         border: `1px solid ${habit.isCompleted ? "var(--color-success)" : "var(--color-border)"}`,
+        borderLeft: `4px solid ${color}`,
         borderRadius: "var(--radius)",
         padding: "1rem 1.25rem",
         boxShadow: "var(--shadow)",
@@ -293,6 +288,16 @@ function HabitCard({ habit, onComplete, onArchive }: HabitCardProps): React.JSX.
               gap: "0.4rem",
             }}
           >
+            <span
+              aria-hidden
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "999px",
+                background: color,
+                flexShrink: 0,
+              }}
+            />
             {habit.isCompleted ? "✅" : "⭕"} {habit.name}
           </span>
           {habit.description && (
@@ -358,6 +363,18 @@ function HabitCard({ habit, onComplete, onArchive }: HabitCardProps): React.JSX.
             ✓ Complete
           </button>
           <button
+            onClick={onEdit}
+            title="Edit habit"
+            style={{
+              ...btnStyle,
+              background: "var(--color-bg)",
+              color: "var(--color-text)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            Edit
+          </button>
+          <button
             onClick={onArchive}
             title="Archive habit"
             style={{ ...btnStyle, background: "#fef2f2", color: "var(--color-danger)", border: "1px solid #fecaca" }}
@@ -371,16 +388,6 @@ function HabitCard({ habit, onComplete, onArchive }: HabitCardProps): React.JSX.
 }
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
-
-const inputStyle: React.CSSProperties = {
-  padding: "0.5rem 0.75rem",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius)",
-  fontSize: "0.95rem",
-  width: "100%",
-  background: "var(--color-bg)",
-  color: "var(--color-text)",
-};
 
 const btnStyle: React.CSSProperties = {
   padding: "0.35rem 0.85rem",

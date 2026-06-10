@@ -10,6 +10,11 @@
 
 import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
+
+import { MealsWidget } from "./components/MealsWidget";
+import { QuoteWidget } from "./components/QuoteWidget";
+import { StatsCard } from "./components/StatsCard";
+import { StreakWidget } from "./components/StreakWidget";
 import { HabitsClient } from "./HabitsClient";
 
 import { AppFooter } from "./components/AppFooter";
@@ -38,7 +43,24 @@ export default async function HomePage(): Promise<React.JSX.Element> {
         <p style={{ color: "var(--color-muted)" }}>Build better habits, one day at a time.</p>
       </header>
 
+      <div style={{ marginBottom: "2rem" }}>
+        <QuoteWidget />
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <StreakWidget />
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
+        <StatsCard />
+      </div>
+
       <HabitsClient initialHabits={habits} />
+
+      {/* Meals */}
+      <div style={{ marginTop: "2rem" }}>
+        <MealsWidget />
+      </div>
     </main>
     <AppFooter />
   );
