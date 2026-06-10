@@ -48,6 +48,12 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       </div>
 
       <div style={{ marginBottom: "2rem" }}>
+        {/* TipWidget inserted here */}
+        {/* @ts-expect-error Async Server Component */}
+        <TipWidget />
+      </div>
+
+      <div style={{ marginBottom: "2rem" }}>
         <StreakWidget />
       </div>
 
