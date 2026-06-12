@@ -26,7 +26,8 @@ const TipWidget = async () => {
       <h3>Tip del día</h3>
       <p>{tip}</p>
 
-      <style jsx>{`
+      {/* Plain <style> (not styled-jsx) so this stays a Server Component; selectors scoped under .tip-card */}
+      <style>{`
         .tip-card {
           border: 1px solid #ddd;
           border-radius: 8px;
@@ -37,12 +38,12 @@ const TipWidget = async () => {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
             Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
-        h3 {
+        .tip-card h3 {
           margin: 0 0 8px 0;
           font-size: 1.25rem;
           color: #333;
         }
-        p {
+        .tip-card p {
           margin: 0;
           font-size: 1rem;
           color: #666;
