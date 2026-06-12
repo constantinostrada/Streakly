@@ -139,6 +139,23 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
     }
   };
 
+  // Archive every active habit (the API has no bulk endpoint) after confirmation.
+  const handleClearAll = async (): Promise<void> => {
+    if (habits.length === 0) return;
+    if (!window.confirm("Remove all habits from the list?")) return;
+    clearError();
+    const responses = await Promise.all(
+      habits.map(async (habit) => {
+        const res = await fetch(`/api/habits/${habit.id}/archive`, { method: "POST" });
+        return (await res.json()) as ApiResponse<HabitResponseDto>;
+      }),
+    );
+    if (responses.some((json) => !json.success)) {
+      setError("Some habits could not be cleared.");
+    }
+    await refreshHabits();
+  };
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -188,13 +205,31 @@ export function HabitsClient({ initialHabits }: HabitsClientProps): React.JSX.El
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--color-muted)" }}>
             Active Habits ({habits.length})
           </h2>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-          >
-            + Hábito
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {habits.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void handleClearAll()}
+                title="Remove all habits"
+                style={{
+                  ...btnStyle,
+                  background: "#fef2f2",
+                  color: "var(--color-danger)",
+                  border: "1px solid #fecaca",
+                  cursor: "pointer",
+                }}
+              >
+                Clear all
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={openCreate}
+              className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+            >
+              + Hábito
+            </button>
+          </div>
         </div>
 
         {habits.length === 0 ? (
