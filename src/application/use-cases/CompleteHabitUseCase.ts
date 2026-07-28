@@ -6,13 +6,17 @@
  */
 
 import type { IHabitRepository } from "@/domain/repositories/IHabitRepository";
+import type { HabitStreakService } from "@/domain/services/HabitStreakService";
 import { HabitId } from "@/domain/value-objects/HabitId";
 import { HabitNotFoundException } from "@/domain/exceptions/HabitNotFoundException";
 import type { CompleteHabitDto, HabitResponseDto } from "../dtos/HabitDto";
 import { HabitMapper } from "../mappers/HabitMapper";
 
 export class CompleteHabitUseCase {
-  constructor(private readonly habitRepository: IHabitRepository) {}
+  constructor(
+    private readonly habitRepository: IHabitRepository,
+    private readonly streakService: HabitStreakService,
+  ) {}
 
   public async execute(dto: CompleteHabitDto): Promise<HabitResponseDto> {
     const id = HabitId.from(dto.id);
@@ -27,6 +31,9 @@ export class CompleteHabitUseCase {
 
     await this.habitRepository.save(habit);
 
-    return HabitMapper.toDto(habit);
+    // Recalculated after saving, so the response reflects the completion just made.
+    const streak = this.streakService.calculate(habit, new Date());
+
+    return HabitMapper.toDto(habit, streak);
   }
 }

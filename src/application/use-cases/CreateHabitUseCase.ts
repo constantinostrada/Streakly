@@ -12,6 +12,7 @@ import { Habit } from "@/domain/entities/Habit";
 import { HabitId } from "@/domain/value-objects/HabitId";
 import { HabitFrequency } from "@/domain/value-objects/HabitFrequency";
 import type { IHabitRepository } from "@/domain/repositories/IHabitRepository";
+import type { HabitStreakService } from "@/domain/services/HabitStreakService";
 import type { IIdGenerator } from "../ports/IIdGenerator";
 import type { CreateHabitDto, HabitResponseDto } from "../dtos/HabitDto";
 import { HabitMapper } from "../mappers/HabitMapper";
@@ -20,6 +21,7 @@ export class CreateHabitUseCase {
   constructor(
     private readonly habitRepository: IHabitRepository,
     private readonly idGenerator: IIdGenerator,
+    private readonly streakService: HabitStreakService,
   ) {}
 
   public async execute(dto: CreateHabitDto): Promise<HabitResponseDto> {
@@ -41,6 +43,10 @@ export class CreateHabitUseCase {
 
     await this.habitRepository.save(habit);
 
-    return HabitMapper.toDto(habit);
+    // A brand-new habit has no history yet, but the streak still comes from the
+    // domain service rather than being hard-coded here.
+    const streak = this.streakService.calculate(habit, now);
+
+    return HabitMapper.toDto(habit, streak);
   }
 }

@@ -12,6 +12,8 @@
 import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
 import { UuidGenerator } from "@/infrastructure/id/UuidGenerator";
 
+import { HabitStreakService } from "@/domain/services/HabitStreakService";
+
 import { CreateHabitUseCase } from "@/application/use-cases/CreateHabitUseCase";
 import { GetHabitUseCase } from "@/application/use-cases/GetHabitUseCase";
 import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
@@ -20,21 +22,23 @@ import { UpdateHabitUseCase } from "@/application/use-cases/UpdateHabitUseCase";
 import { ArchiveHabitUseCase } from "@/application/use-cases/ArchiveHabitUseCase";
 
 const idGenerator = new UuidGenerator();
+/** Stateless domain service — one shared instance is enough. */
+const streakService = new HabitStreakService();
 
 export const makeCreateHabitUseCase = (): CreateHabitUseCase =>
-  new CreateHabitUseCase(habitRepository, idGenerator);
+  new CreateHabitUseCase(habitRepository, idGenerator, streakService);
 
 export const makeGetHabitUseCase = (): GetHabitUseCase =>
-  new GetHabitUseCase(habitRepository);
+  new GetHabitUseCase(habitRepository, streakService);
 
 export const makeListHabitsUseCase = (): ListHabitsUseCase =>
-  new ListHabitsUseCase(habitRepository);
+  new ListHabitsUseCase(habitRepository, streakService);
 
 export const makeCompleteHabitUseCase = (): CompleteHabitUseCase =>
-  new CompleteHabitUseCase(habitRepository);
+  new CompleteHabitUseCase(habitRepository, streakService);
 
 export const makeUpdateHabitUseCase = (): UpdateHabitUseCase =>
-  new UpdateHabitUseCase(habitRepository);
+  new UpdateHabitUseCase(habitRepository, streakService);
 
 export const makeArchiveHabitUseCase = (): ArchiveHabitUseCase =>
-  new ArchiveHabitUseCase(habitRepository);
+  new ArchiveHabitUseCase(habitRepository, streakService);

@@ -50,6 +50,10 @@ export interface HabitResponseDto {
   completionsThisPeriod: number;
   isCompleted: boolean;
   completionRate: number;
+  /** Consecutive satisfied periods still alive as of the response instant. */
+  currentStreak: number;
+  /** Best run of consecutive satisfied periods ever recorded. */
+  longestStreak: number;
   isArchived: boolean;
   createdAt: string; // ISO-8601 string — safe to serialise across boundaries
   updatedAt: string;
