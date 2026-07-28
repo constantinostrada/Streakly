@@ -19,7 +19,17 @@ The previously-recorded gotcha that InMemoryHabitRepository's HabitSnapshot has 
 - **Learned:** update or remove the old memory entry describing this as an open gap — it is now resolved.
 - **Where:** `src/infrastructure/persistence/InMemoryHabitRepository.ts`
 
-## convention · 5
+## convention · 7
+
+### Each Chiron board task is committed as its own standalone git commit, titled with the…
+Each Chiron board task is committed as its own standalone git commit, titled with the Spanish task name matching the board entry verbatim (e.g. "Tarea 4 — UI: mostrar la racha en la card")
+- **Why:** confirmed by git log showing prior tareas (Tarea 3, TipWidget, Saludo widget, etc.) each as separate commits, and followed by committing this task's change alone rather than bundling with unrelated files
+- **Where:** `repo git history / commit workflow for src/app changes.`
+
+### Habit card streak UI shows a 🔥 flame + currentStreak as a bold headline, with…
+Habit card streak UI shows a 🔥 flame + currentStreak as a bold headline, with longestStreak as a subtle subtitle below (e.g. 'Longest: 1 day'), pluralized by the habit's frequencyPeriod (day vs week)
+- **Why:** matches the task spec (headline = current, subtitle = longest) and reuses the existing Tailwind semantic classes (text-text, text-muted) from tailwind.config.ts rather than introducing new colors
+- **Where:** `src/app/HabitsClient.tsx (HabitCard component).`
 
 ### New endpoint GET /api/habits/:id/streak reuses makeGetHabitUseCase() and the existing…
 New endpoint GET /api/habits/:id/streak reuses makeGetHabitUseCase() and the existing ok()/handleError() response helpers, and just narrows the already-computed DTO down to { habitId, currentStreak, longestStreak } — no new use case was created
@@ -54,7 +64,24 @@ HabitStreakService is not backed by a new IClock port; use cases pass `asOf` exp
 - **Learned:** when a service needs "now", pass it in from the use case rather than adding a clock abstraction unless multiple call sites need to share a mocked clock.
 - **Where:** `src/application/use-cases/*, src/domain/services/HabitStreakService.ts`
 
-## gotcha · 6
+## gotcha · 8
+
+### `npx tsc --noEmit` fails with pre-existing 'override modifier' errors (TS4114/TS2416) in…
+`npx tsc --noEmit` fails with pre-existing 'override modifier' errors (TS4114/TS2416) in src/domain/exceptions/DomainException.ts and HabitNotFoundException.ts, unrelated to any specific feature work
+- **Why:** confirmed identical via `git stash` before/after change — not introduced by any single task
+- **Learned:** don't treat these specific tsc errors as a regression signal when verifying a change; compare against a stash baseline instead.
+
+### HabitGrid (the 30-day contribution grid inside each habit card) computes and displays its…
+HabitGrid (the 30-day contribution grid inside each habit card) computes and displays its own streak from browser localStorage, independent of the API's currentStreak/longestStreak fields now shown on the card header
+- **Why:** HabitGrid predates the API-side streak calculation added in Tarea 3, so the two streak sources were never unified
+- **Learned:** a habit card can end up showing two different, possibly conflicting streak numbers; consolidating onto the API-derived streak is future cleanup work, not yet done.
+- **Where:** `src/app/HabitGrid.tsx vs src/app/HabitsClient.tsx (HabitCard)`
+
+### The home page (src/app/page.tsx) had `<HabitsClient>` accidentally removed by an earlier…
+The home page (src/app/page.tsx) had `<HabitsClient>` accidentally removed by an earlier commit (ec95d2f, the TipWidget task), so habits were fetched server-side but never rendered as a list
+- **Why:** introduced silently by an unrelated feature commit, not caught until Tarea 4 needed the cards to exist
+- **Learned:** verify the home page actually renders the habit list before building on top of it — check git blame/log on page.tsx if the list seems missing.
+- **Where:** `src/app/page.tsx`
 
 ### This checkout's `node_modules` starts empty and `package-lock.json` is out of sync with…
 This checkout's `node_modules` starts empty and `package-lock.json` is out of sync with `package.json`, so a plain `npm install` (needed before `tsc`/`next lint` will run at all) rewrites the lockfile even though no dependency was intentionally changed
@@ -84,9 +111,3 @@ src/app/page.tsx directly instantiated `new ListHabitsUseCase(habitRepository)` 
 package-lock.json is out of sync with package.json and node_modules ships empty, so `npm ci` fails and `npm run type-check`/`lint` can't run as-is
 - **Why:** pre-existing repo state, unrelated to the streak task
 - **Learned:** verify TypeScript changes via a scratch/global tsc install instead of `npm install`, to avoid rewriting the lockfile.
-
-### InMemoryHabitRepository's HabitSnapshot has no field for completionHistory, so toEntity()…
-InMemoryHabitRepository's HabitSnapshot has no field for completionHistory, so toEntity() always rebuilds habits with empty history
-- **Why:** pre-existing gap from a prior task (Tarea 1), not covered by the streak-exposure task
-- **Learned:** streak math is correct given a full history, but live HTTP responses will show 0/0 or 1/1 right after completion until the snapshot is extended to carry completion history.
-- **Where:** `src/infrastructure/persistence/InMemoryHabitRepository.ts`
