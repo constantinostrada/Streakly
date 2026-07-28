@@ -9,10 +9,13 @@
  *  - Frequency must be a positive integer (times per period).
  *  - A habit cannot be completed more times than its frequency within a period.
  *  - Archived habits cannot be completed.
+ *  - Every completion is appended to an immutable history that outlives period
+ *    resets (see CompletionHistory) — the raw material for streak calculations.
  */
 
 import type { HabitId } from "../value-objects/HabitId";
 import type { HabitFrequency } from "../value-objects/HabitFrequency";
+import { CompletionHistory } from "../value-objects/CompletionHistory";
 import { DomainException } from "../exceptions/DomainException";
 
 export type FrequencyPeriod = "daily" | "weekly";
@@ -27,6 +30,8 @@ export interface HabitProps {
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
+  /** Every completion ever recorded. Omit for a habit with no history yet. */
+  completionHistory?: CompletionHistory;
 }
 
 export class Habit {
@@ -39,6 +44,7 @@ export class Habit {
   private _isArchived: boolean;
   private readonly _createdAt: Date;
   private _updatedAt: Date;
+  private _completionHistory: CompletionHistory;
 
   private constructor(props: HabitProps) {
     this._id = props.id;
@@ -50,6 +56,7 @@ export class Habit {
     this._isArchived = props.isArchived;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
+    this._completionHistory = props.completionHistory ?? CompletionHistory.empty();
   }
 
   // ─── Factory ──────────────────────────────────────────────────────────────
@@ -76,10 +83,12 @@ export class Habit {
   // ─── Business behaviour ───────────────────────────────────────────────────
 
   /**
-   * Record one completion for the current period.
+   * Record one completion for the current period, timestamped at `completedAt`
+   * (defaults to now).  The timestamp is appended to the completion history so
+   * streaks remain computable after period resets.
    * Throws if the habit is archived or already fully completed.
    */
-  public complete(): void {
+  public complete(completedAt: Date = new Date()): void {
     if (this._isArchived) {
       throw new DomainException("Cannot complete an archived habit.");
     }
@@ -89,11 +98,14 @@ export class Habit {
       );
     }
     this._completionsThisPeriod += 1;
+    this._completionHistory = this._completionHistory.record(completedAt);
     this._updatedAt = new Date();
   }
 
   /**
    * Reset completions — called at the start of every new period by a domain service.
+   * The completion history is deliberately preserved: it is a permanent log, not
+   * a per-period counter.
    */
   public resetPeriod(): void {
     this._completionsThisPeriod = 0;
@@ -161,6 +173,12 @@ export class Habit {
   }
   public get completionsThisPeriod(): number {
     return this._completionsThisPeriod;
+  }
+  public get completionHistory(): CompletionHistory {
+    return this._completionHistory;
+  }
+  public get lastCompletedAt(): Date | null {
+    return this._completionHistory.lastCompletedAt;
   }
   public get isArchived(): boolean {
     return this._isArchived;
