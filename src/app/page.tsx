@@ -12,6 +12,7 @@ import { makeListHabitsUseCase } from "@/interfaces/http/helpers/useCaseFactory"
 
 import TipWidget from "./components/TipWidget";
 import GreetingWidget from "./components/GreetingWidget";
+import { HabitsClient } from "./HabitsClient";
 
 import { AppFooter } from "./components/AppFooter";
 
@@ -20,7 +21,7 @@ async function getHabits() {
 }
 
 export default async function HomePage(): Promise<React.JSX.Element> {
-  await getHabits();
+  const habits = await getHabits();
 
   return (
     <>
@@ -46,6 +47,8 @@ export default async function HomePage(): Promise<React.JSX.Element> {
           {/* TipWidget inserted here */}
           <TipWidget />
         </div>
+
+        <HabitsClient initialHabits={habits} />
       </main>
       <AppFooter />
     </>

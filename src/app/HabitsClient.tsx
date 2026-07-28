@@ -293,6 +293,8 @@ interface HabitCardProps {
 
 function HabitCard({ habit, onComplete, onArchive, onEdit }: HabitCardProps): React.JSX.Element {
   const progressPercent = Math.round(habit.completionRate * 100);
+  // Streaks count satisfied periods, so the unit follows the habit's cadence.
+  const streakUnit = habit.period === "daily" ? "day" : "week";
 
   // Accent color is browser-local; load it after mount to avoid hydration drift.
   const [color, setColor] = useState(DEFAULT_HABIT_COLOR);
@@ -354,6 +356,22 @@ function HabitCard({ habit, onComplete, onArchive, onEdit }: HabitCardProps): Re
         >
           {habit.period}
         </span>
+      </div>
+
+      {/* Streak (computed server-side, returned by the API) */}
+      <div>
+        <div className="flex items-baseline gap-1.5">
+          <span aria-hidden>🔥</span>
+          <span className="text-lg font-bold text-text">{habit.currentStreak}</span>
+          <span className="text-sm font-medium text-muted">
+            {streakUnit}
+            {habit.currentStreak === 1 ? "" : "s"} streak
+          </span>
+        </div>
+        <p className="text-xs text-muted">
+          Longest: {habit.longestStreak} {streakUnit}
+          {habit.longestStreak === 1 ? "" : "s"}
+        </p>
       </div>
 
       {/* Progress bar */}
