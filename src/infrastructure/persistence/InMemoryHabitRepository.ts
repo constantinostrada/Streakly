@@ -14,6 +14,7 @@
 
 import type { IHabitRepository } from "@/domain/repositories/IHabitRepository";
 import { Habit } from "@/domain/entities/Habit";
+import { CompletionHistory } from "@/domain/value-objects/CompletionHistory";
 import { HabitFrequency } from "@/domain/value-objects/HabitFrequency";
 import { HabitId } from "@/domain/value-objects/HabitId";
 import type { HabitId as HabitIdType } from "@/domain/value-objects/HabitId";
@@ -26,6 +27,8 @@ interface HabitSnapshot {
   frequencyValue: number;
   period: "daily" | "weekly";
   completionsThisPeriod: number;
+  /** Every completion ever recorded — survives period resets, feeds streaks. */
+  completionHistory: Date[];
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -67,6 +70,8 @@ export class InMemoryHabitRepository implements IHabitRepository {
       frequencyValue: habit.frequency.value,
       period: habit.period,
       completionsThisPeriod: habit.completionsThisPeriod,
+      // `dates` already returns defensive copies, so the store can't be mutated.
+      completionHistory: habit.completionHistory.dates,
       isArchived: habit.isArchived,
       createdAt: habit.createdAt,
       updatedAt: habit.updatedAt,
@@ -81,6 +86,7 @@ export class InMemoryHabitRepository implements IHabitRepository {
       frequency: HabitFrequency.of(snapshot.frequencyValue),
       period: snapshot.period,
       completionsThisPeriod: snapshot.completionsThisPeriod,
+      completionHistory: CompletionHistory.of(snapshot.completionHistory),
       isArchived: snapshot.isArchived,
       createdAt: snapshot.createdAt,
       updatedAt: snapshot.updatedAt,

@@ -8,8 +8,7 @@
  * Client Component below.
  */
 
-import { ListHabitsUseCase } from "@/application/use-cases/ListHabitsUseCase";
-import { habitRepository } from "@/infrastructure/persistence/singletonRepository";
+import { makeListHabitsUseCase } from "@/interfaces/http/helpers/useCaseFactory";
 
 import TipWidget from "./components/TipWidget";
 import GreetingWidget from "./components/GreetingWidget";
@@ -17,8 +16,7 @@ import GreetingWidget from "./components/GreetingWidget";
 import { AppFooter } from "./components/AppFooter";
 
 async function getHabits() {
-  const useCase = new ListHabitsUseCase(habitRepository);
-  return useCase.execute({ includeArchived: false });
+  return makeListHabitsUseCase().execute({ includeArchived: false });
 }
 
 export default async function HomePage(): Promise<React.JSX.Element> {
