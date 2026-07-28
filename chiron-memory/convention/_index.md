@@ -1,4 +1,4 @@
-# convention · 4
+# convention · 5
 
 > Section index — this project's **convention** memory. Open a concept below for the full detail.
 
@@ -6,3 +6,4 @@
 - [[convention/completehabitusecase-recalculates-the-streak-aft]] — CompleteHabitUseCase recalculates the streak after saving the new completion, not before
 - [[convention/habitmapper-todto-habit-streak-takes-an-already]] — HabitMapper.toDto(habit, streak) takes an already-computed domain Streak VO and reads…
 - [[convention/listhabitsusecase-computes-a-single-asof-instant]] — ListHabitsUseCase computes a single `asOf` instant once and reuses it for every habit's…
+- [[convention/new-endpoint-get-api-habits-id-streak-reuses-mak]] — New endpoint GET /api/habits/:id/streak reuses makeGetHabitUseCase() and the existing…
