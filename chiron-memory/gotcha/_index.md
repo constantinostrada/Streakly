@@ -1,0 +1,6 @@
+# gotcha · 2
+
+> Section index — this project's **gotcha** memory. Open a concept below for the full detail.
+
+- [[gotcha/inmemoryhabitrepository-s-habitsnapshot-has-no-f]] — InMemoryHabitRepository's HabitSnapshot has no field for completionHistory, so toEntity()…
+- [[gotcha/package-lock-json-is-out-of-sync-with-package-js]] — package-lock.json is out of sync with package.json and node_modules ships empty, so `npm…
